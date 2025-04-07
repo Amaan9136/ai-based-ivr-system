@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Emergency Help</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    .response {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Emergency Help</h1>
+  <p>This section is for emergency contact or assistance.</p>
+
+  <form id="emergencyForm">
+    <label for="type">Emergency Type:</label>
+    <select id="type" name="type" required>
+      <option value="">Loading types...</option>
+    </select>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" required></textarea>
+
+    <label for="location">Location:</label>
+    <input type="text" id="location" name="location" required>
+
+    <label for="contact">Your Contact (optional):</label>
+    <input type="text" id="contact" name="contact">
+
+    <label>
+      <input type="checkbox" id="anonymous" name="anonymous">
+      Submit anonymously
+    </label>
+
+    <button type="submit">Report Emergency</button>
+  </form>
+
+  <div class="response" id="responseBox" style="display: none;"></div>
+
+  <script>
+    // Load emergency types
+    fetch('/emergency/api/emergency-types')
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById('type');
+        select.innerHTML = '';
+        data.types.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.id;
+          option.textContent = `${item.name} - ${item.description}`;
+          select.appendChild(option);
+        });
+      });
+
+    // Handle form submit
+    document.getElementById('emergencyForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const payload = {
+        type: document.getElementById('type').value,
+        description: document.getElementById('description').value,
+        location: document.getElementById('location').value,
+        contact: document.getElementById('contact').value,
+        anonymous: document.getElementById('anonymous').checked
+      };
+
+      fetch('/emergency/api/report-emergency', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        const box = document.getElementById('responseBox');
+        box.style.display = 'block';
+        box.innerHTML = `
+          <strong>${data.message}</strong><br>
+          Case ID: ${data.case_id}<br>
+          Priority: ${data.priority}<br>
+          Contact Info: ${data.contact_info}<br>
+          ${data.additional_info ? `<br><strong>Note:</strong> ${data.additional_info}` : ''}
+        `;
+        document.getElementById('emergencyForm').reset();
+      });
+    });
+  </script>
+</body>
+</html>
