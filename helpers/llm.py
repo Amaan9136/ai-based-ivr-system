@@ -2,55 +2,99 @@ import re
 import json
 import ollama
 import numpy as np
-from typing import List, Dict
-import chromadb
+from typing import List, Dict, Any
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # ---------- LLM: Generate and sanitize response ----------
 
-def generate_response(prompt: str, model: str = "llama3.2") -> str:
-    response = ollama.generate(
-        model=model,
-        prompt=prompt,
-        stream=False
-    )
-
+def generate_response(prompt: str, model: str = "llama3.2:latest") -> str:
+    response = ollama.generate(model=model, prompt=prompt, stream=False)
     raw_response = response.get("response", "").strip()
     return sanitize_response(raw_response)
+
 
 def sanitize_response(raw: str) -> str:
     cleaned = re.sub(r"^```(?:json)?\n", "", raw.strip())
     cleaned = re.sub(r"```$", "", cleaned)
-
     try:
         response_json = json.loads(cleaned)
         if isinstance(response_json, dict) and "title" in response_json:
             return response_json["title"].strip()
     except json.JSONDecodeError:
         pass
-
     return cleaned
 
-# ---------- Embedding + Batch Embeddings ----------
 
-# chroma_client = chromadb.Client()
-# collection = chroma_client.get_or_create_collection(name="docs")
+# ---------- Batch Embedding Helper ----------
+def embed_text(text: str, model: str) -> List[float]:
+    try:
+        response = ollama.embeddings(model=model, prompt=text)
+        return response.get("embedding", [])
+    except Exception as e:
+        return None
 
-def generate_embeddings(texts: List[str], model: str = "mxbai-embed-large") -> List[List[float]]:
+
+# ---------- Main Embedding Function ----------
+def generate_embeddings(
+    texts: List[str],
+    model: str = "mxbai-embed-large",
+    chunk_size: int = 100,
+    max_workers: int = 6,
+    collection: Any = None,
+    ids: List[str] = None,
+    documents: List[str] = None,
+) -> List[List[float]]:
+
     if not texts:
         return []
 
+    total = len(texts)
+    batches = []
+    for i in range(0, total, chunk_size):
+        batch = texts[i:i + chunk_size]
+        batch_ids = ids[i:i + chunk_size] if ids else None
+        batch_docs = documents[i:i + chunk_size] if documents else batch
+        batches.append((i, batch, batch_ids, batch_docs))
+
+    tqdm.write(f"🔍 Starting embedding in {len(batches)} batches (chunk size = {chunk_size})")
+
     all_embeddings = []
-    for text in texts:
-        response = ollama.embeddings(
-            model=model,
-            prompt=text
-        )
-        embedding = response.get("embedding", [])
-        if embedding:
-            all_embeddings.append(embedding)
-        else:
-            print(f"[Warning] No embedding returned for: {text}")
+
+    with tqdm(total=len(batches), desc="🚀 Total Progress") as overall_progress:
+        for batch_index, batch, batch_ids, batch_docs in batches:
+            batch_embeddings = []
+            successful = 0
+            failed = 0
+
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_text = {
+                    executor.submit(embed_text, text, model): (text, idx)
+                    for idx, text in enumerate(batch)
+                }
+
+                for future in as_completed(future_to_text):
+                    text, idx = future_to_text[future]
+                    embedding = future.result()
+                    batch_embeddings.append(embedding)
+                    if embedding:
+                        successful += 1
+                    else:
+                        failed += 1
+
+            # Store in collection (if passed)
+            if collection and batch_ids:
+                filtered = [(e, i, d) for e, i, d in zip(batch_embeddings, batch_ids, batch_docs) if e]
+                if filtered:
+                    emb, id_, doc_ = zip(*filtered)
+                    collection.add(embeddings=emb, ids=id_, documents=doc_)
+
+            all_embeddings.extend([e for e in batch_embeddings if e])
+            tqdm.write(f"✅ Batch {batch_index}-{batch_index+len(batch)-1}: {successful} stored, {failed} failed.")
+            overall_progress.update(1)
+
+    tqdm.write(f"\n🎉 Done! Embedded {len(all_embeddings)} total entries.\n")
     return all_embeddings
 
 # ---------- Similarity ----------
@@ -80,9 +124,8 @@ def find_similarities(normal_text: str, test_texts: List[str]) -> List[Dict[str,
             "text": text,
             "similarity": round(similarity, 4)
         })
-
+    print(similarity)
     return results
-
 
 # TEST ABOVE FUNCTIONS
 
@@ -94,12 +137,6 @@ embeddings = generate_embeddings(texts)
 print("Embedding Test:")
 for text, emb in zip(texts, embeddings):
     print(f"{text} => Embedding size: {len(emb)} | Sample: {emb[:5]}")
-
-# --- Similarity Test ---
-similarities = find_similarities(texts[0], [texts[1]])
-print("\nSimilarity Test:")
-for s in similarities:
-    print(f"{s['similarity']} - {s['text']}")
 
 # --- LLM Response Test ---
 prompt = "Give me a creative idea to reduce plastic waste"

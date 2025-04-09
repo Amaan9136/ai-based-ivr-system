@@ -16,6 +16,10 @@ from routes.scholarships import bp as scholarships_bp
 from routes.general_questions import bp as general_questions_bp
 from routes.emergency import bp as emergency_bp
 from helpers.llm import generate_embeddings, generate_response, find_similarities
+from helpers.chroma_helpers import init_all_collections
+
+# Initialize ChromaDB collections at startup
+init_all_collections()
 
 app.register_blueprint(nearby_schools_bp, url_prefix="/nearby-schools")
 app.register_blueprint(update_records_bp, url_prefix="/update-records")
