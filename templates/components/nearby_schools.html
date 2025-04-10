@@ -113,23 +113,10 @@
           appendMessage(data.response, "bot");
           oldSummary = data.old_response_summary;
 
-          // ✅ Inside the try block where you handle the audio
           if (data.audio) {
             const audio = new Audio("data:audio/mp3;base64," + data.audio);
             audio.play();
-
-            // ✅ Gradually reduce the volume over 0.5 seconds (500 milliseconds)
-            let volume = 1.0;  // Start with full volume
-            const volumeFadeInterval = setInterval(() => {
-              if (volume > 0) {
-                volume -= 0.05;  // Reduce volume slightly
-                audio.volume = volume;
-              } else {
-                clearInterval(volumeFadeInterval);  // Stop once volume reaches 0
-              }
-            }, 500);  
           }
-
 
         } catch (error) {
           console.error("Error fetching response:", error);
