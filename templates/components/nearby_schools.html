@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Nearby School Chatbot</title>
@@ -13,87 +14,177 @@
       padding: 15px;
       background: #f9f9f9;
     }
+
     .message {
       margin-bottom: 15px;
     }
-    .user { text-align: right; color: blue; }
-    .bot { text-align: left; color: green; }
+
+    .user {
+      text-align: right;
+      color: blue;
+    }
+
+    .bot {
+      text-align: left;
+      color: green;
+    }
   </style>
 </head>
+
 <body>
-<div class="container mt-5">
-  <h2>Nearby School Chatbot</h2>
-  <div id="chat-box" class="mb-3"></div>
+  <audio id="loadingBeep" src="{{ url_for('static', filename='audio/waiting_music.mp3') }}" loop></audio>
+  <div class="container mt-5">
 
-  <form id="chat-form" class="input-group">
-    <input type="text" id="promptInput" class="form-control" placeholder="Ask me about schools..." required>
-    <button type="button" class="btn btn-outline-primary" onclick="startVoiceInput()">🎤</button>
-    <button class="btn btn-success" type="submit">Send</button>
-  </form>
-</div>
+    <h2>Nearby School Chatbot</h2>
 
-<script>
-  let language = "english";
-  let langCode = "en";
+    <!-- Language dropdown -->
+    <div class="mb-3">
+      <label for="languageSelect" class="form-label">Choose Language:</label>
+      <select id="languageSelect" class="form-select">
+        <option value="english">English</option>
+        <option value="hindi">Hindi</option>
+        <option value="kannada">Kannada</option>
+      </select>
+    </div>
 
-  fetch("/language/get-language")
-    .then(res => res.json())
-    .then(data => {
-      language = data.language?.toLowerCase() || "english";
-      langCode = language === "hindi" ? "hi" : language === "kannada" ? "kn" : "en";
-    });
+    <div id="chat-box" class="mb-3"></div>
 
-  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+    <form id="chat-form" class="input-group">
+      <input type="text" id="promptInput" class="form-control" placeholder="Ask me about schools..." required>
+      <button type="button" class="btn btn-outline-primary" id="micButton">🎤</button>
+      <button class="btn btn-success" type="submit">Send</button>
+    </form>
+  </div>
 
-  function startVoiceInput() {
-    recognition.lang = langCode;
-    recognition.start();
-  }
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let recognitionInProgress = false;
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.interimResults = false;
 
-  recognition.onresult = (event) => {
-    document.getElementById("promptInput").value = event.results[0][0].transcript;
-  };
+      const chatForm = document.getElementById("chat-form");
+      const chatBox = document.getElementById("chat-box");
+      const promptInput = document.getElementById("promptInput");
+      const languageSelect = document.getElementById("languageSelect");
+      const micButton = document.getElementById("micButton");
 
-  const chatForm = document.getElementById("chat-form");
-  const chatBox = document.getElementById("chat-box");
-  let oldSummary = "";
+      let oldSummary = "";
 
-  chatForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const prompt = document.getElementById("promptInput").value.trim();
-    if (!prompt) return;
-
-    chatBox.innerHTML += `<div class="message user"><strong>You:</strong> ${prompt}</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    fetch("/nearby-schools/nearby_school_finder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: prompt,
-        old_response_summary: oldSummary,
-        language: language
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        chatBox.innerHTML += `<div class="message bot"><strong>Bot:</strong> ${data.response}</div>`;
+      // Append message to chat box
+      function appendMessage(text, sender) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${sender}`;
+        msgDiv.textContent = text;
+        chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
-        oldSummary = data.old_response_summary;
+      }
 
-        if (data.audio) {
-          const audio = new Audio("data:audio/mp3;base64," + data.audio);
-          audio.play();
+      // Submit form handler
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const prompt = promptInput.value.trim();
+        const selectedLanguage = languageSelect.value;
+        if (!prompt) return;
+
+        appendMessage(prompt, "user");
+        promptInput.value = "";
+
+        // Start beep sound
+        const loadingBeep = document.getElementById("loadingBeep");
+        loadingBeep.play();
+
+        try {
+          const response = await fetch("/nearby-schools/nearby_school_finder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt,
+              language: selectedLanguage,
+              old_response_summary: oldSummary,
+              conversation_state: {}
+            })
+          });
+
+          const data = await response.json();
+
+          loadingBeep.pause();
+          loadingBeep.currentTime = 0;
+
+          appendMessage(data.response, "bot");
+          oldSummary = data.old_response_summary;
+
+          // ✅ Inside the try block where you handle the audio
+          if (data.audio) {
+            const audio = new Audio("data:audio/mp3;base64," + data.audio);
+            audio.play();
+
+            // ✅ Gradually reduce the volume over 0.5 seconds (500 milliseconds)
+            let volume = 1.0;  // Start with full volume
+            const volumeFadeInterval = setInterval(() => {
+              if (volume > 0) {
+                volume -= 0.05;  // Reduce volume slightly
+                audio.volume = volume;
+              } else {
+                clearInterval(volumeFadeInterval);  // Stop once volume reaches 0
+              }
+            }, 500);  
+          }
+
+
+        } catch (error) {
+          console.error("Error fetching response:", error);
+
+          // Also stop beep sound on error
+          loadingBeep.pause();
+          loadingBeep.currentTime = 0;
+
+          appendMessage("Sorry, something went wrong.", "bot");
         }
-      })
-      .catch(err => {
-        chatBox.innerHTML += `<div class="message bot text-danger"><strong>Bot:</strong> Error occurred.</div>`;
       });
 
-    document.getElementById("promptInput").value = "";
-  });
-</script>
+      // Language change handler
+      languageSelect.addEventListener("change", async (e) => {
+        const lang = e.target.value;
+        await fetch("/language/set-language", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: lang })
+        });
+        console.log("Language set to:", lang);
+      });
+
+      // Start voice input
+      function startVoiceInput() {
+        if (recognitionInProgress) return;
+        recognitionInProgress = true;
+
+        const langMap = {
+          english: "en-US",
+          hindi: "hi-IN",
+          kannada: "kn-IN"
+        };
+
+        const selectedLang = languageSelect.value;
+        recognition.lang = langMap[selectedLang] || "en-US";
+        recognition.start();
+      }
+
+      // Voice recognition events
+      recognition.onresult = function (event) {
+        promptInput.value = event.results[0][0].transcript;
+        recognitionInProgress = false;
+      };
+
+      recognition.onerror = function (e) {
+        console.error("Voice recognition error:", e);
+        recognitionInProgress = false;
+      };
+
+      // Bind mic button click
+      micButton.addEventListener("click", startVoiceInput);
+    });
+  </script>
+
 </body>
+
 </html>

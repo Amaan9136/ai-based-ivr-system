@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import os
 import requests
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 # Importing and registering blueprints
 from routes.nearby_schools import bp as nearby_schools_bp
@@ -19,6 +20,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+CORS(app) 
 
 # Initialize ChromaDB collections at startup
 init_all_collections()
