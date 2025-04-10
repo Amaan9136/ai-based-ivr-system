@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Records</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .field-select, .field-input {
+      display: inline-block;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Update Records</h1>
+    <p class="mb-4">This page allows users to update their academic or personal records.</p>
+
+    <!-- Authentication Form -->
+    <form id="authForm" class="mb-4">
+      <div class="mb-3">
+        <label for="studentId" class="form-label">Student ID</label>
+        <input type="text" class="form-control" id="studentId" placeholder="e.g. STU12345" required>
+      </div>
+      <div class="mb-3">
+        <label for="parentPhone" class="form-label">Parent Phone</label>
+        <input type="text" class="form-control" id="parentPhone" placeholder="e.g. 9876543210" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Authenticate</button>
+    </form>
+
+    <!-- Auth Result -->
+    <div id="authResult" class="mb-4"></div>
+
+    <!-- Update Form (Hidden until authenticated) -->
+    <div id="updateSection" style="display: none;">
+      <h4>Update Information</h4>
+      <form id="updateForm">
+        <div class="mb-3">
+          <label for="fieldSelect" class="form-label">Field to Update</label>
+          <select class="form-select" id="fieldSelect" required>
+            <option value="" disabled selected>Select a field</option>
+            <option value="address">Address</option>
+            <option value="contact">Parent Contact</option>
+            <option value="emergency_contact">Emergency Contact</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="fieldValue" class="form-label">New Value</label>
+          <input type="text" class="form-control" id="fieldValue" required>
+        </div>
+        <button type="submit" class="btn btn-success">Update</button>
+      </form>
+      <div id="updateResult" class="mt-3"></div>
+    </div>
+  </div>
+
+  <script>
+    let authenticatedStudentId = '';
+
+    document.getElementById('authForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const studentId = document.getElementById('studentId').value;
+      const parentPhone = document.getElementById('parentPhone').value;
+
+      fetch('/update-records/authenticate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId, parent_phone: parentPhone })
+      })
+        .then(res => res.json())
+        .then(data => {
+          const resultDiv = document.getElementById('authResult');
+          if (data.authenticated) {
+            authenticatedStudentId = data.student.id;
+            resultDiv.innerHTML = `
+              <div class="alert alert-success">
+                Welcome, <strong>${data.student.name}</strong> from Grade ${data.student.grade} - ${data.student.section}<br>
+                School: ${data.student.school}<br>
+                Address: ${data.student.address}<br>
+                Parent: ${data.student.parent_name} | Contact: ${data.student.contact}<br>
+                Emergency Contact: ${data.student.emergency_contact}
+              </div>
+            `;
+            document.getElementById('updateSection').style.display = 'block';
+          } else {
+            resultDiv.innerHTML = '<div class="alert alert-danger">Authentication failed. Please check your credentials.</div>';
+            document.getElementById('updateSection').style.display = 'none';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('authResult').innerHTML = '<div class="alert alert-danger">An error occurred.</div>';
+        });
+    });
+
+    document.getElementById('updateForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const field = document.getElementById('fieldSelect').value;
+      const value = document.getElementById('fieldValue').value;
+
+      fetch('/update-records/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: authenticatedStudentId, field, value })
+      })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('updateResult').innerHTML = `
+            <div class="alert alert-info">
+              ${data.message}<br>
+              <strong>${data.updated_field}</strong> updated to: <strong>${data.new_value}</strong>
+            </div>
+          `;
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('updateResult').innerHTML = '<div class="alert alert-danger">Failed to update record.</div>';
+        });
+    });
+  </script>
+</body>
+</html>
