@@ -27,11 +27,41 @@
 
   <form id="chat-form" class="input-group">
     <input type="text" id="promptInput" class="form-control" placeholder="Ask me about schools..." required>
+<<<<<<< HEAD
+=======
+    <button type="button" class="btn btn-outline-primary" onclick="startVoiceInput()">🎤</button>
+>>>>>>> master
     <button class="btn btn-success" type="submit">Send</button>
   </form>
 </div>
 
 <script>
+<<<<<<< HEAD
+=======
+  let language = "english";
+  let langCode = "en";
+
+  fetch("/language/get-language")
+    .then(res => res.json())
+    .then(data => {
+      language = data.language?.toLowerCase() || "english";
+      langCode = language === "hindi" ? "hi" : language === "kannada" ? "kn" : "en";
+    });
+
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  function startVoiceInput() {
+    recognition.lang = langCode;
+    recognition.start();
+  }
+
+  recognition.onresult = (event) => {
+    document.getElementById("promptInput").value = event.results[0][0].transcript;
+  };
+
+>>>>>>> master
   const chatForm = document.getElementById("chat-form");
   const chatBox = document.getElementById("chat-box");
   let oldSummary = "";
@@ -44,19 +74,37 @@
     chatBox.innerHTML += `<div class="message user"><strong>You:</strong> ${prompt}</div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
+<<<<<<< HEAD
     fetch("/nearby-schools/api/nearby_school_finder", {
+=======
+    fetch("/nearby-schools/nearby_school_finder", {
+>>>>>>> master
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: prompt,
+<<<<<<< HEAD
         old_response_summary: oldSummary
+=======
+        old_response_summary: oldSummary,
+        language: language
+>>>>>>> master
       })
     })
       .then(res => res.json())
       .then(data => {
         chatBox.innerHTML += `<div class="message bot"><strong>Bot:</strong> ${data.response}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
+<<<<<<< HEAD
         oldSummary = data.old_response_summary; // 🔁 properly update summary
+=======
+        oldSummary = data.old_response_summary;
+
+        if (data.audio) {
+          const audio = new Audio("data:audio/mp3;base64," + data.audio);
+          audio.play();
+        }
+>>>>>>> master
       })
       .catch(err => {
         chatBox.innerHTML += `<div class="message bot text-danger"><strong>Bot:</strong> Error occurred.</div>`;
@@ -65,6 +113,9 @@
     document.getElementById("promptInput").value = "";
   });
 </script>
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 </body>
 </html>

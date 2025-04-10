@@ -56,7 +56,11 @@
 
   <script>
     // Fetch complaint types
+<<<<<<< HEAD
     fetch('/complaints/api/complaint-types')
+=======
+    fetch('/complaints/complaint-types')
+>>>>>>> master
       .then(response => response.json())
       .then(data => {
         const select = document.getElementById('type');
@@ -77,7 +81,11 @@
       const anonymous = document.getElementById('anonymous').checked;
       const student_id = document.getElementById('student_id').value;
 
+<<<<<<< HEAD
       fetch('/complaints/api/file-complaint', {
+=======
+      fetch('/complaints/file-complaint', {
+>>>>>>> master
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

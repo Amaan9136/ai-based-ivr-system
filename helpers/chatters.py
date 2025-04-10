@@ -2,6 +2,7 @@ import json
 import re
 from helpers.llm import generate_response
 
+<<<<<<< HEAD
 
 def fix_malformed_json(output: str) -> dict | None:
     try:
@@ -9,11 +10,17 @@ def fix_malformed_json(output: str) -> dict | None:
         output = re.sub(r'^\[.*?\]\s*', '', output)
 
         # Strip anything before first opening brace
+=======
+def fix_malformed_json(output: str) -> dict | None:
+    try:
+        # Strip everything before the first curly brace
+>>>>>>> master
         start_index = output.find('{')
         if start_index == -1:
             return None
         json_str = output[start_index:]
 
+<<<<<<< HEAD
         # Replace single quotes with double quotes carefully
         json_str = json_str.replace("'", '"')
 
@@ -24,11 +31,23 @@ def fix_malformed_json(output: str) -> dict | None:
         json_str = re.sub(
             r'("new_response"\s*:\s*".*?)(?<!\\)"\s*("old_response_summary"\s*:\s*")',
             r'\1", \2',
+=======
+        # Fix common issues
+        json_str = json_str.replace("'", '"')  # single to double quotes
+        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)  # remove trailing commas
+        json_str = re.sub(
+            r'("new_response"\s*:\s*".+?")\s*("old_response_summary"\s*:\s*")',
+            r'\1, \2',
+>>>>>>> master
             json_str,
             flags=re.DOTALL
         )
 
+<<<<<<< HEAD
         # Balance double quotes
+=======
+        # Balance quotes
+>>>>>>> master
         if json_str.count('"') % 2 != 0:
             json_str += '"'
 
@@ -45,11 +64,15 @@ def fix_malformed_json(output: str) -> dict | None:
 
         parsed = json.loads(json_str)
 
+<<<<<<< HEAD
         if not isinstance(parsed, dict):
             print("[Fix Attempt] Parsed JSON is not a dict.")
             return None
 
         # Ensure required keys
+=======
+        # Ensure required keys exist
+>>>>>>> master
         if not all(key in parsed for key in ["new_response", "old_response_summary"]):
             print("[Fix Attempt] JSON is missing required keys.")
             return None

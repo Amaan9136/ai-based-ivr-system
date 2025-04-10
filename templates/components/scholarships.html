@@ -45,7 +45,11 @@
 
       loading.style.display = 'inline-block';
 
+<<<<<<< HEAD
       fetch('/scholarships/api/available-scholarships')
+=======
+      fetch('/scholarships/available-scholarships')
+>>>>>>> master
         .then(res => res.json())
         .then(data => {
           loading.style.display = 'none';
@@ -81,7 +85,11 @@
       const scholarshipId = document.getElementById('scholarshipId').value;
       const studentId = document.getElementById('studentId').value;
 
+<<<<<<< HEAD
       fetch('/scholarships/api/apply-scholarship', {
+=======
+      fetch('/scholarships/apply-scholarship', {
+>>>>>>> master
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -15,7 +15,11 @@ def generate_case_id():
     numbers = ''.join(random.choices(string.digits, k=6))
     return f"{prefix}{numbers}"
 
+<<<<<<< HEAD
 @bp.route('/api/report-emergency', methods=['POST'])
+=======
+@bp.route('/report-emergency', methods=['POST'])
+>>>>>>> master
 def report_emergency():
     data = request.json
     emergency_type = data.get('type', '')
@@ -43,7 +47,11 @@ def report_emergency():
     
     return jsonify(emergency_response)
 
+<<<<<<< HEAD
 @bp.route('/api/emergency-types', methods=['GET'])
+=======
+@bp.route('/emergency-types', methods=['GET'])
+>>>>>>> master
 def emergency_types():
     # Return available emergency report types
     types = [

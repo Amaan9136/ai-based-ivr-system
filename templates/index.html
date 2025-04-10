@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<<<<<<< HEAD
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -274,3 +275,294 @@
     </script>
 </body>
 </html>
+=======
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School IVR System</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f8f9fa;
+      }
+      .phone-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        display: flex;
+        height: 800px;
+      }
+      .sidebar {
+        width: 300px;
+        background-color: #343a40;
+        color: white;
+        padding: 20px;
+      }
+      .sidebar-header {
+        text-align: center;
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 20px;
+      }
+      .language-selector {
+        margin-bottom: 20px;
+      }
+      .content-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .content-header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+      }
+      .content-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+      .menu-btn {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 10px;
+        text-align: left;
+        border-radius: 8px;
+        transition: all 0.3s;
+        position: relative;
+      }
+      .menu-btn span.number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+      .menu-btn:hover,
+      .menu-btn.active {
+        background-color: #007bff;
+      }
+      .phone-mockup {
+        width: 100%;
+        height: 100%;
+        background-color: white;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .phone-header {
+        padding: 15px;
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+        border-radius: 10px 10px 0 0;
+      }
+      .phone-display {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #f2f2f2;
+      }
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .user-message,
+      .system-message {
+        max-width: 75%;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 15px;
+        position: relative;
+      }
+      .user-message {
+        align-self: flex-end;
+        background-color: #007bff;
+        color: white;
+        margin-left: auto;
+      }
+      .system-message {
+        align-self: flex-start;
+        background-color: #e9e9eb;
+        color: #333;
+      }
+      .message-input {
+        display: flex;
+        padding: 10px;
+        background-color: white;
+        border-top: 1px solid #ddd;
+      }
+      .message-input input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        margin-right: 10px;
+      }
+      .message-input button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+      .phone-keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 15px;
+        background-color: #f8f9fa;
+      }
+      .keypad-btn {
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .keypad-btn:hover {
+        background-color: #f0f0f0;
+      }
+      .iframe-container {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid p-0">
+      <div class="phone-container">
+        <!-- Left Sidebar with Menu Options -->
+        <div class="sidebar">
+          <div class="sidebar-header">
+            <h3>School IVR System</h3>
+            <div class="language-selector">
+              <select id="languageSelect" class="form-select">
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+                <option value="kannada">Kannada</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            class="btn btn-dark menu-btn active"
+            data-target="nearby-schools"
+          >
+            <span class="number">1</span> Nearby Schools & Admission
+          </button>
+
+          <button class="btn btn-dark menu-btn" data-target="update-records">
+            <span class="number">2</span> Update Student Records
+          </button>
+
+          <button class="btn btn-dark menu-btn" data-target="complaints">
+            <span class="number">3</span> File Complaints
+          </button>
+
+          <button class="btn btn-dark menu-btn" data-target="scholarships">
+            <span class="number">4</span> Scholarships & Fees
+          </button>
+
+          <button class="btn btn-dark menu-btn" data-target="general-questions">
+            <span class="number">5</span> Speak to AI Agent
+          </button>
+
+          <button class="btn btn-dark menu-btn" data-target="emergency">
+            <span class="number">6</span> Emergency Complaint
+          </button>
+        </div>
+
+        <!-- Main Content Area (iframe container) -->
+        <div class="content-area">
+          <iframe
+            id="contentFrame"
+            class="iframe-container"
+            src="/nearby-schools"
+            frameborder="0"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Handle menu button clicks
+        const menuButtons = document.querySelectorAll(".menu-btn");
+        const contentFrame = document.getElementById("contentFrame");
+        const languageSelect = document.getElementById("languageSelect");
+
+        // Set active menu item and load corresponding page
+        menuButtons.forEach((button) => {
+          button.addEventListener("click", function () {
+            // Remove active class from all buttons
+            menuButtons.forEach((btn) => btn.classList.remove("active"));
+
+            // Add active class to clicked button
+            this.classList.add("active");
+
+            // Get target route from data attribute
+            const target = this.getAttribute("data-target");
+
+            // Update iframe source
+            contentFrame.src = "/" + target;
+          });
+        });
+
+        languageSelect.addEventListener("change", function () {
+          const language = this.value;
+
+          // Send language preference to backend
+          fetch("/language/set-language", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ language: language }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Language set to:", data.language || data.message);
+
+              // Reload current iframe to reflect language change
+              contentFrame.contentWindow.location.reload();
+            })
+            .catch((error) => {
+              console.error("Error setting language:", error);
+            });
+        });
+
+        // Initialize with first option
+        contentFrame.src = "/nearby-schools";
+      });
+    </script>
+  </body>
+</html>
+>>>>>>> master
