@@ -7,11 +7,7 @@ bp = Blueprint('scholarships', __name__, url_prefix='/scholarships')
 def index():
     return render_template('components/scholarships.html')
 
-<<<<<<< HEAD
-@bp.route('/api/available-scholarships', methods=['GET'])
-=======
 @bp.route('/available-scholarships', methods=['GET'])
->>>>>>> master
 def available_scholarships():
     # In a real app, this would query a database
     # Mock scholarship data for demonstration
@@ -47,11 +43,7 @@ def available_scholarships():
         'scholarships': scholarships
     })
 
-<<<<<<< HEAD
-@bp.route('/api/fee-structure', methods=['POST'])
-=======
 @bp.route('/fee-structure', methods=['POST'])
->>>>>>> master
 def fee_structure():
     data = request.json
     school_id = data.get('school_id', '')
@@ -73,11 +65,7 @@ def fee_structure():
         'fee_structure': fee_structure
     })
 
-<<<<<<< HEAD
-@bp.route('/api/apply-scholarship', methods=['POST'])
-=======
 @bp.route('/apply-scholarship', methods=['POST'])
->>>>>>> master
 def apply_scholarship():
     data = request.json
     scholarship_id = data.get('scholarship_id', '')

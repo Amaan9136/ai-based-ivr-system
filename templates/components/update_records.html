@@ -64,11 +64,7 @@
       const studentId = document.getElementById('studentId').value;
       const parentPhone = document.getElementById('parentPhone').value;
 
-<<<<<<< HEAD
-      fetch('/update-records/api/authenticate', {
-=======
       fetch('/update-records/authenticate', {
->>>>>>> master
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: studentId, parent_phone: parentPhone })
@@ -105,11 +101,7 @@
       const field = document.getElementById('fieldSelect').value;
       const value = document.getElementById('fieldValue').value;
 
-<<<<<<< HEAD
-      fetch('/update-records/api/update', {
-=======
       fetch('/update-records/update', {
->>>>>>> master
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: authenticatedStudentId, field, value })

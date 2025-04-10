@@ -15,11 +15,7 @@ def generate_complaint_id():
     numbers = ''.join(random.choices(string.digits, k=6))
     return f"{prefix}{numbers}"
 
-<<<<<<< HEAD
-@bp.route('/api/file-complaint', methods=['POST'])
-=======
 @bp.route('/file-complaint', methods=['POST'])
->>>>>>> master
 def file_complaint():
     data = request.json
     complaint_type = data.get('type', '')
@@ -41,11 +37,7 @@ def file_complaint():
         'next_steps': 'Your complaint will be reviewed within 24 hours. You can check the status using your complaint ID.'
     })
 
-<<<<<<< HEAD
-@bp.route('/api/complaint-types', methods=['GET'])
-=======
 @bp.route('/complaint-types', methods=['GET'])
->>>>>>> master
 def complaint_types():
     # Return available complaint types
     types = [

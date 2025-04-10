@@ -7,11 +7,7 @@ bp = Blueprint('update_records', __name__, url_prefix='/update-records')
 def index():
     return render_template('components/update_records.html')
 
-<<<<<<< HEAD
-@bp.route('/api/authenticate', methods=['POST'])
-=======
 @bp.route('/authenticate', methods=['POST'])
->>>>>>> master
 def authenticate():
     data = request.json
     student_id = data.get('student_id', '')
@@ -45,11 +41,7 @@ def authenticate():
             'message': 'Invalid student ID or phone number'
         })
 
-<<<<<<< HEAD
-@bp.route('/api/update', methods=['POST'])
-=======
 @bp.route('/update', methods=['POST'])
->>>>>>> master
 def update_record():
     data = request.json
     student_id = data.get('student_id', '')

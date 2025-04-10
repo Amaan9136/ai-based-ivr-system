@@ -124,11 +124,6 @@ def find_similarities(normal_text: str, test_texts: List[str]) -> List[Dict[str,
             "text": text,
             "similarity": round(similarity, 4)
         })
-<<<<<<< HEAD
-    print(similarity)
-=======
-
->>>>>>> master
     return results
 
 # TEST ABOVE FUNCTIONS

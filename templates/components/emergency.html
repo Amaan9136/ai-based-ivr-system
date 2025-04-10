@@ -60,11 +60,7 @@
 
   <script>
     // Load emergency types
-<<<<<<< HEAD
-    fetch('/emergency/api/emergency-types')
-=======
     fetch('/emergency/emergency-types')
->>>>>>> master
       .then(res => res.json())
       .then(data => {
         const select = document.getElementById('type');
@@ -89,11 +85,7 @@
         anonymous: document.getElementById('anonymous').checked
       };
 
-<<<<<<< HEAD
-      fetch('/emergency/api/report-emergency', {
-=======
       fetch('/emergency/report-emergency', {
->>>>>>> master
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
