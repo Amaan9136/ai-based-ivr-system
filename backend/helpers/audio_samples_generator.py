@@ -66,11 +66,11 @@ async def _synthesize_tts(text, voice):
         return ""
 
 # 🔊 Generate and save TTS audio
-msg = "Please Select a valid language"
+msg = "Please Select a valid digit."
 audio_base64 = generate_tts_audio(msg, lang='kn')
 
 if audio_base64:
-    with open("please input a valid digit.mp3", "wb") as f:
+    with open("enter_valid_digit.mp3", "wb") as f:
         f.write(base64.b64decode(audio_base64))
     print("enter_valid_digit.mp3 ✅")
 else:
