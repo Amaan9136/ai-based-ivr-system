@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mermaid Flowchart - Dark Theme</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #121212;
+      color: #f1f1f1;
+    }
+    h1 {
+      color: #ffffff;
+    }
+    .mermaid {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>SAAS IVR Flowchart</h1>
+
+  <div class="mermaid">
+flowchart TD
+  A[Outbound Call] --> B{Language Selection}
+  B -->|2| D[English Selected]
+  D --> G{Main Menu English}
+
+  G -->|1| M[Nearby Schools]
+  G -->|2| N[Update Student Info]
+  G -->|3| O[Report Complaint]
+  G -->|0| P[Agent Transfer]
+
+  M --> M1{School Submenu}
+  M1 -->|1| M2[Admission Information]
+  M1 -->|2| M3[School Facilities]
+  M1 -->|3| M4[Distance & Transport]
+  M1 -->|4| M5[Contact Principal]
+  M1 -->|*| G
+
+  N --> N1[Authentication]
+  N1 --> N2{Update Options}
+  N2 -->|1| N3[Update Contact Info]
+  N2 -->|2| N4[Update Address]
+  N2 -->|3| N5[Update Guardian]
+  N2 -->|*| G
+
+  O --> O1{Complaint Type}
+  O1 -->|1| O2[Bullying Report]
+  O1 -->|2| O3[Ragging Report]
+  O1 -->|3| O4[Infrastructure Issues]
+  O1 -->|4| O5[Academic Concerns]
+  O1 -->|5| O6[Other Issues]
+  O1 -->|*| G
+
+  O2 --> O7[Collect Details]
+  O3 --> O7
+  O4 --> O7
+  O5 --> O7
+  O6 --> O7
+  O7 --> O8[Generate Complaint ID]
+  O8 --> O9[Status Confirmation]
+  O9 --> G
+
+  P --> P1[Queue for English Agent]
+
+  classDef start fill:#2a9d8f,stroke:#1c1c1c,stroke-width:1px,color:#fff,font-size:12px;
+  classDef menu fill:#264653,stroke:#1c1c1c,stroke-width:1px,color:#fff,font-size:12px;
+  classDef submenu fill:#e9c46a,stroke:#1c1c1c,stroke-width:1px,color:#000,font-size:12px;
+  classDef update fill:#e76f51,stroke:#1c1c1c,stroke-width:1px,color:#fff,font-size:12px;
+  classDef complaint fill:#a78bfa,stroke:#1c1c1c,stroke-width:1px,color:#fff,font-size:12px;
+  classDef action fill:#94a3b8,stroke:#1c1c1c,stroke-width:1px,color:#000,font-size:12px;
+
+  class A,B,D start;
+  class G,M,N,O,P menu;
+  class M1,M2,M3,M4,M5 submenu;
+  class N1,N2,N3,N4,N5 update;
+  class O1,O2,O3,O4,O5,O6,O7,O8,O9 complaint;
+  class P1 action;
+  </div>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "dark",
+      themeVariables: {
+        fontSize: '12px',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f1f5f9',
+        primaryBorderColor: '#334155',
+        lineColor: '#cbd5e1',
+        secondaryColor: '#0f172a',
+        tertiaryColor: '#475569'
+      }
+    });
+  </script>
+</body>
+</html>

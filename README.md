@@ -22,6 +22,8 @@ Welcome to the Hackathon! We're excited to have you on board and can't wait to s
 > **Intelligent Voice-Based School support system using LLM, RAG and Multilingual AI**
 
 ---
+## Flow Diagram
+<a href="flow.html">View</a>
 
 ### Let's Get Started 
 
@@ -43,3 +45,5 @@ If you need any support during the hackathon, don't hesitate to reach out to the
 
 Cheers,  
 _Advaya Hackathon Team_
+
+
