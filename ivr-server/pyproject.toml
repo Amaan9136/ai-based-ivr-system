@@ -1,0 +1,20 @@
+[project]
+name = "ivr-server"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Soorya U",email = "sooryau7@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard] (>=0.115.12,<0.116.0)",
+    "twilio (>=9.5.2,<10.0.0)",
+    "numpy (>=2.2.4,<3.0.0)",
+    "noisereduce (>=3.0.3,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
