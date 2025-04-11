@@ -6,7 +6,6 @@ from flask_cors import CORS
 
 # Importing and registering blueprints
 from routes.nearby_schools import bp as nearby_schools_bp
-from routes.update_records import bp as update_records_bp
 from routes.complaints import bp as complaints_bp
 from routes.scholarships import bp as scholarships_bp
 from routes.general_questions import bp as general_questions_bp
