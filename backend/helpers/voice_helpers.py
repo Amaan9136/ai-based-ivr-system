@@ -21,6 +21,33 @@ VOICE_OPTIONS = {
     }
 }
 
+def translate_text_to_english(text: str, language: str = 'english') -> str:
+    """
+    Translate the given text to English from the specified language.
+    Returns original text if already in English or if translation fails.
+    """
+    language = language.lower()
+
+    if language == 'english':
+        return text
+
+    try:
+        return GoogleTranslator(source=language, target='english').translate(text)
+    except Exception as e:
+        print(f"[Translation Error] {e}")
+        return text
+
+def translate_text_to_session_language(text: str, session_lang: str) -> str:
+    session_lang = session_lang.lower()
+    if session_lang == "english":
+        return text
+
+    try:
+        return GoogleTranslator(source='english', target=session_lang).translate(text)
+    except Exception as e:
+        print(f"[Translation Error] {e}")
+        return text
+
 
 def generate_tts_audio(text, lang='en', gender='female'):
     text = text.strip()
@@ -67,30 +94,3 @@ async def _synthesize_tts(text, voice):
     except Exception as e:
         print(f"[TTS Streaming Error] {e}")
         return ""
-
-
-def translate_text_to_english():
-    data = request.json
-    text = data.get('text', '')
-    language = session.get('language', 'english').lower()
-
-    if language == "english":
-        return jsonify({"translated_text": text})
-
-    try:
-        translated_text = GoogleTranslator(source=language, target='english').translate(text)
-        return jsonify({"translated_text": translated_text})
-    except Exception as e:
-        return jsonify({"translated_text": text, "error": str(e)})
-
-
-def translate_text_to_session_language(text: str, session_lang: str) -> str:
-    session_lang = session_lang.lower()
-    if session_lang == "english":
-        return text
-
-    try:
-        return GoogleTranslator(source='english', target=session_lang).translate(text)
-    except Exception as e:
-        print(f"[Translation Error] {e}")
-        return text

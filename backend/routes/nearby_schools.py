@@ -2,9 +2,8 @@ from flask import Blueprint, render_template, request, jsonify, session
 import re
 from helpers.chatters import chat_with_history
 from helpers.chroma_helpers import chroma_karnataka_schools
-from helpers.voice_helpers import generate_tts_audio, translate_text_to_session_language
+from helpers.voice_helpers import generate_tts_audio, translate_text_to_session_language, translate_text_to_english
 from helpers.data_helpers import save_admission_request
-from deep_translator import GoogleTranslator
 
 bp = Blueprint('nearby_schools', __name__, url_prefix='/nearby-schools')
 
@@ -48,30 +47,33 @@ def index():
 
 @bp.route('/nearby_school_finder', methods=['POST'])
 def chatbot_response():
-    data = request.json
-    prompt = data.get('prompt', '').strip()
-    old_summary = data.get('old_response_summary', '')
-    conversation_state = data.get('conversation_state', {})
-
-    input_language = data.get("language")
-    if input_language:
-        session['language'] = input_language.lower()
-
-    language = session.get('language', 'english').lower()
-    lang_code = {"english": "en", "hindi": "hi", "kannada": "kn"}.get(language, "en")
-
-    if not prompt:
-        msg = 'Please provide a question.'
-        return jsonify({
-            'status': 'error',
-            'response': msg,
-            'audio': generate_tts_audio(msg, lang=lang_code)
-        }), 400
-
     try:
+        data = request.json
+        prompt = data.get('prompt', '').strip()
+        old_summary = data.get('old_response_summary', '')
+        conversation_state = data.get('conversation_state', {})
+
+        print("[USER:]", prompt)
+
+        input_language = data.get("language")
+        if input_language:
+            session['language'] = input_language.lower()
+
+        language = session.get('language', 'english').lower()
+        lang_code = {"english": "en", "hindi": "hi", "kannada": "kn"}.get(language, "en")
+
+        if not prompt:
+            msg = 'Please provide a question.'
+            return jsonify({
+                'status': 'error',
+                'response': msg,
+                'audio': generate_tts_audio(msg, lang=lang_code)
+            }), 400
+
         # Translate user's prompt to English (for consistent intent detection / embeddings)
         try:
-            translated_prompt_for_intent = GoogleTranslator(source=language, target='english').translate(prompt)
+            translated_prompt_for_intent = translate_text_to_english(prompt, language)
+            print("[USER LANG TO ENG]", translated_prompt_for_intent)
         except Exception as e:
             print(f"[Translation Error] {e}")
             translated_prompt_for_intent = prompt
@@ -82,18 +84,26 @@ def chatbot_response():
         if intent == "find_schools":
             results = chroma_karnataka_schools(prompt)
             if results:
+                def clean(value):
+                    if isinstance(value, str) and '-' in value:
+                        return value.split('-', 1)[-1].strip()
+                    return value
+
                 raw_data = "\n".join(
-                    f"- {r['school_name']} in {r['village']}, {r['block']}, {r['district']}, located at {r['location']}, "
-                    f"managed by {r['state_mgmt']}, category: {r['school_category']}, type: {r['school_type']}"
+                    f"- {clean(r['school_name'])} in {clean(r['village'])}, {clean(r['block'])}, {clean(r['district'])}, located at {clean(r['location'])}, "
+                    f"managed by {clean(r['state_mgmt'])}, category: {clean(r['school_category'])}, type: {clean(r['school_type'])}"
                     for r in results
                 )
+
+                print("[raw_data]",raw_data)
 
                 additional_instructions = (
                     "First apologize for making user to wait. "
                     "You are given raw school data. Your task is to extract structured information and present it in well-formed sentence format suitable for NLP processing. "
                     "The output must include the following details: school name, village, block, district, location, state management, school category, and school type. "
-                    f"Raw data: {raw_data} "
+                    f"DATA: {raw_data} "
                     "Format each output sentence clearly and consistently. Use only lowercase letters in the entire response. Store the result in `new_response`."
+                    "Also store the DATA in old_response_summary too"
                 )
 
                 chat_result = chat_with_history(
