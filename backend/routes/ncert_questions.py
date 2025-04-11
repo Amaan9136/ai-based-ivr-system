@@ -62,7 +62,6 @@ def ask_ncert_question():
                 "generate a clear, helpful, and appropriate response using the provided content. "
                 "Ensure answers are factual, aligned with the NCERT syllabus, explaining entire topic as a notes in 200 - 300 words."
                 "Also store the provided complete DATA in old_response_summary too while summarizing as text"
-                "In the end ask if user wants EMAIL response"
             )
 
             chat_result = chat_with_history(
@@ -72,12 +71,7 @@ def ask_ncert_question():
                 old_summary=old_summary
             )
 
-            # Only translate if language is NOT English
-            if language != "english":
-                print("NOT ENGLISH")
-                translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-            else:
-                translated_response = chat_result['new_response']
+            translated_response = translate_text_to_session_language(chat_result['new_response'], language)
 
             # Generate audio (always use lang_code for TTS)
             audio_base64 = generate_tts_audio(translated_response, lang=lang_code)

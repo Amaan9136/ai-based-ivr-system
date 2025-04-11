@@ -113,11 +113,7 @@ def chatbot_response():
                     old_summary=old_summary
                 )
 
-                # Only translate if language is NOT English
-                if language != "english":
-                    translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-                else:
-                    translated_response = chat_result['new_response']
+                translated_response = translate_text_to_session_language(chat_result['new_response'], language)
 
                 # Generate audio (always use lang_code for TTS)
                 audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
@@ -186,7 +182,6 @@ def chatbot_response():
         )
 
         translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-        audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
 
         return jsonify({
             'status': 'success',
