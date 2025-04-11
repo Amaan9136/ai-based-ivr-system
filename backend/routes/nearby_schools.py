@@ -45,7 +45,7 @@ def index():
     return render_template('components/nearby_schools.html')
 
 
-@bp.route('/nearby_school_finder', methods=['POST'])
+@bp.route('/ask', methods=['POST'])
 def chatbot_response():
     try:
         data = request.json
@@ -95,7 +95,7 @@ def chatbot_response():
                     for r in results
                 )
 
-                print("[raw_data]",raw_data)
+                print("[raw_data] ",raw_data)
 
                 additional_instructions = (
                     "First apologize for making user to wait. "
@@ -103,7 +103,7 @@ def chatbot_response():
                     "The output must include the following details: school name, village, block, district, location, state management, school category, and school type. "
                     f"DATA: {raw_data} "
                     "Format each output sentence clearly and consistently. Use only lowercase letters in the entire response. Store the result in `new_response`."
-                    "Also store the DATA in old_response_summary too"
+                    "Also store the provided school DATA in old_response_summary too while summarizing as text"
                 )
 
                 chat_result = chat_with_history(
@@ -114,8 +114,10 @@ def chatbot_response():
                 )
 
                 translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-                audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
 
+                # Generate audio (always use lang_code for TTS)
+                audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
+            
                 return jsonify({
                     'status': 'success',
                     'response': translated_response,
@@ -180,7 +182,6 @@ def chatbot_response():
         )
 
         translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-        audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
 
         return jsonify({
             'status': 'success',
