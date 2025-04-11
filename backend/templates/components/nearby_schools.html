@@ -21,7 +21,7 @@
 
     .user {
       text-align: right;
-      color: black;
+      color: white;
     }
 
     .bot {
@@ -40,7 +40,7 @@
     <!-- Language dropdown -->
     <div class="mb-3">
       <label for="languageSelect" class="form-label text-black">Choose Language:</label>
-      <select id="languageSelect" class="form-select">
+      <select id="languageSelect" class="form-select bg-white text-black">
         <option value="english">English</option>
         <option value="hindi">Hindi</option>
         <option value="kannada">Kannada</option>
@@ -156,19 +156,48 @@
         recognition.start();
       }
 
-      // Voice recognition events
+      // Voice recognition result
       recognition.onresult = function (event) {
         promptInput.value = event.results[0][0].transcript;
         recognitionInProgress = false;
+        recognition.stop();
       };
 
+      // Restart if user is silent
+      recognition.onspeechend = function () {
+        recognition.stop();
+        if (promptInput.value.trim() === "") {
+          console.log("No speech detected, restarting...");
+          recognition.start();
+        } else {
+          recognitionInProgress = false;
+        }
+      };
+
+      // Handle errors like no-speech
       recognition.onerror = function (e) {
         console.error("Voice recognition error:", e);
-        recognitionInProgress = false;
+        recognition.stop();
+
+        if (e.error === "no-speech" || e.error === "audio-capture") {
+          console.log("No speech or audio capture error, retrying...");
+          recognition.start(); // 🔁 Retry listening
+        } else {
+          appendMessage("Voice recognition error occurred. Please try again.", "bot");
+          recognitionInProgress = false;
+        }
       };
 
       // Bind mic button click
-      micButton.addEventListener("click", startVoiceInput);
+      micButton.addEventListener("click", () => {
+        try {
+          recognition.stop(); // stop any previous sessions
+        } catch (e) {
+          // no active session, safe to ignore
+        }
+        startVoiceInput();
+      });
+
     });
   </script>
 

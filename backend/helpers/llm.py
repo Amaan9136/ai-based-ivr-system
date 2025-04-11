@@ -11,15 +11,29 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # llama3.2:latest
 # or
-# phi4
+# gemma2:latest
 
-def generate_response(prompt: str, model: str = "phi4:latest") -> str:
-    response = ollama.generate(model=model, prompt=prompt, stream=False)
-    raw_response = response.get("response", "").strip()
-    return sanitize_response(raw_response)
+def generate_response(prompt: str, model: str = "llama3.2:latest") -> str:
+    response_text = ""
+
+    try:
+        # Use streaming correctly — accumulate chunks
+        response = ollama.generate(
+            model=model,
+            prompt=prompt,
+            stream=False,
+        )
+
+        response_text = response.get("response", "")
+
+    except Exception as e:
+        return f"Error generating response: {str(e)}"
+
+    return sanitize_response(response_text.strip())
 
 
 def sanitize_response(raw: str) -> str:
+    # Clean up response if it includes code blocks or extra formatting
     cleaned = re.sub(r"^```(?:json)?\n", "", raw.strip())
     cleaned = re.sub(r"```$", "", cleaned)
     try:
