@@ -11,18 +11,8 @@ bp = Blueprint('nearby_schools', __name__, url_prefix='/nearby-schools')
 REQUIRED_FIELDS = ["student_name", "phone", "address"]
 
 INTENT_KEYWORDS = {
-    "find_schools": [
-        "find", "school", "near", "nearby", "area", "location", "locality", "around me", 
-        "search for schools", "locate school", "schools in", "close to me", "nearest school", 
-        "lookup schools", "suggest schools", "schools near", "schools nearby", "good schools", 
-        "schools available", "list of schools", "where is the school", "school finder"
-    ],
-    "admission": [
-        "admission", "apply", "submit", "enroll", "enrollment", "admissions open", 
-        "register", "registration", "how to join", "application process", "start admission", 
-        "seeking admission", "fill form", "fill application", "join school", "how to apply", 
-        "school entry", "when can I apply", "how to register", "apply for school"
-    ]
+    "find_schools": ["find", "school", "near", "nearby", "area", "location", "in my locality"],
+    "admission": ["admission", "apply", "submit", "enroll"]
 }
 
 
