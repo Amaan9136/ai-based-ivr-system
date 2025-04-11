@@ -9,7 +9,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------- LLM: Generate and sanitize response ----------
 
-def generate_response(prompt: str, model: str = "llama3.2:latest") -> str:
+# llama3.2:latest
+# or
+# phi4
+
+def generate_response(prompt: str, model: str = "phi4:latest") -> str:
     response = ollama.generate(model=model, prompt=prompt, stream=False)
     raw_response = response.get("response", "").strip()
     return sanitize_response(raw_response)
