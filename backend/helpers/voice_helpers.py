@@ -57,7 +57,7 @@ def generate_tts_audio(text, lang='en', gender='female'):
 
 async def _synthesize_tts(text, voice):
     try:
-        communicate = edge_tts.Communicate(text, voice, rate="+15%")
+        communicate = edge_tts.Communicate(text, voice, rate="+20%")
         stream = BytesIO()
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
