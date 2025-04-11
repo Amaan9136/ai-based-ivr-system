@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def generate_response(prompt: str, model: str = "llama3.2:latest") -> str:
     response_text = ""
+    print("[PROMPT]",prompt)
 
     try:
         # Use streaming correctly — accumulate chunks
