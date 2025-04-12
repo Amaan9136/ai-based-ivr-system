@@ -10,17 +10,17 @@ service_router = APIRouter()
 @service_router.post("/service")
 def get_service(request: Request):
     print("🔍 Retrieving prompt and endpoint values from app state...")
-    prompt = request.app.state.prompt
+    wav_url = request.app.state.wav_url
     endpoint = request.app.state.endpoint
 
     url = f"{FLASK_URL}{endpoint}"
-    data = {"prompt": prompt}
+    data = {"audio_url": wav_url}
     print(f"🌐 Sending POST request to Flask service: {url} with data: {data}")
 
     res = requests.post(
         url, json=data, headers={"Content-Type": "application/json"}
     ).json()
-    print("✅ Successfully received response from Flask service.")
+    print("✅ Successfully received response from Flask service.", res)
 
     audio_b64 = res.get("audio")
     if not audio_b64:
