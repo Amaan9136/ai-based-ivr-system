@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.routes import call_router, service_router, option_router
+from dotenv import load_dotenv
 
-
+load_dotenv()
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
