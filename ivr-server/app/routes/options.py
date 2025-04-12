@@ -70,7 +70,9 @@ async def handle_requirements_selection(request: Request):
 
     request.app.state.endpoint = route_mapper[digit]
 
-    response.say("What is your Query? Start speaking after the beep.")
+    language = request.app.state.language
+
+    response.play(str(request.base_url) + f'static/query_share_{language}.mp3')
 
     response.record(
         action="/stream/start",

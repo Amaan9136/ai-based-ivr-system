@@ -1,5 +1,5 @@
 NGROK_URL = "318b-103-213-211-149.ngrok-free.app"
-FLASK_URL = "http://172.16.13.29:5000"
+FLASK_URL = "http://192.168.142.213:5000"
 
 MODEL_MAP = {
     "en": "openai/whisper-medium",  # English
