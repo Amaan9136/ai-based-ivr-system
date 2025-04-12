@@ -2,43 +2,57 @@ import json
 import re
 from helpers.llm import generate_response
 
+
+import json
+import re
+
 def fix_malformed_json(output: str) -> dict | None:
     try:
-        # Strip everything before the first curly brace
+        # Step 1: Extract from first curly brace onward
         start_index = output.find('{')
         if start_index == -1:
             return None
         json_str = output[start_index:]
 
-        # Fix common issues
-        json_str = json_str.replace("'", '"')  # single to double quotes
-        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)  # remove trailing commas
-        json_str = re.sub(
-            r'("new_response"\s*:\s*".+?")\s*("old_response_summary"\s*:\s*")',
-            r'\1, \2',
-            json_str,
-            flags=re.DOTALL
-        )
+        # Step 2: Replace smart/single quotes with regular double quotes
+        json_str = json_str.replace("“", '"').replace("”", '"').replace("‘", '"').replace("’", '"')
+        json_str = json_str.replace("'", '"')
 
-        # Balance quotes
+        # Step 3: Remove illegal control characters (e.g., \x00-\x1F except \n, \r, \t)
+        json_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', json_str)
+
+        # Step 4: Remove trailing commas before closing brackets/braces
+        json_str = re.sub(r',\s*([\]}])', r'\1', json_str)
+
+        # Step 5: Escape newlines inside double-quoted strings
+        def escape_newlines(match):
+            inner = match.group(0)
+            return inner.replace('\n', ' ').replace('\r', '\\r')
+        json_str = re.sub(r'"(.*?)"', escape_newlines, json_str, flags=re.DOTALL)
+
+        # Step 6: Balance quotes (quick fix)
         if json_str.count('"') % 2 != 0:
             json_str += '"'
 
-        # Balance braces
+        # Step 7: Balance braces
         open_braces = json_str.count('{')
         close_braces = json_str.count('}')
         if close_braces < open_braces:
             json_str += '}' * (open_braces - close_braces)
+        elif close_braces > open_braces:
+            json_str = json_str[:json_str.rfind('}') + 1]
 
-        # Remove anything after the last closing brace
-        last_closing = json_str.rfind('}')
-        if last_closing != -1:
-            json_str = json_str[:last_closing + 1]
+        # Step 8: Trim anything after the last closing brace
+        last_brace = json_str.rfind('}')
+        if last_brace != -1:
+            json_str = json_str[:last_brace + 1]
 
+        # Step 9: Attempt to parse
         parsed = json.loads(json_str)
 
-        # Ensure required keys exist
-        if not all(key in parsed for key in ["new_response", "old_response_summary"]):
+        # Step 10: Validate keys
+        required_keys = ["new_response", "old_response_summary"]
+        if not all(k in parsed for k in required_keys):
             print("[Fix Attempt] JSON is missing required keys.")
             return None
 
@@ -62,8 +76,7 @@ Task:
 2. Update the overall chat summary by including the new message and your response, and re-summarizing the full conversation so far.
 
 Rules:
-- Output only a valid JSON object.
-- JSON must include exactly two keys:
+- Output only a valid JSON object, JSON must include exactly two keys:
   • "new_response": Your plain text reply to the user.
   • "old_response_summary": A rewritten summary of the *entire* chat so far, including this latest message and response.
 - Do NOT include usernames, prefixes like 'User:' or 'Bot:', markdown, or formatting.
