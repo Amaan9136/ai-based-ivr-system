@@ -15,6 +15,7 @@ numpy = "^2.2.4"
 fastapi = {extras = ["standard"], version = "0.115.9"}
 transformers = "^4.51.2"
 torch = "^2.6.0"
+python-dotenv = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
