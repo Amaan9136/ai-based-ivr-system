@@ -1,0 +1,51 @@
+from fastapi import APIRouter, Request, Response
+import requests
+from app.constant import FLASK_URL, LANG_MAP
+import base64
+from twilio.twiml.voice_response import VoiceResponse
+from app.helpers import transcribe_audio_bytes
+
+service_router = APIRouter()
+
+
+@service_router.post("/service")
+def get_service(request: Request):
+    clean_audio_bytes = request.app.state.audio_bytes
+    language = request.app.state.language
+
+    print("🔍 Retrieving prompt and endpoint values from app state...")
+    prompt = transcribe_audio_bytes(clean_audio_bytes, LANG_MAP[language])
+    endpoint = request.app.state.endpoint
+
+    url = f"{FLASK_URL}{endpoint}"
+    data = {"prompt": prompt}
+    print(f"🌐 Sending POST request to Flask service: {url} with data: {data}")
+
+    res = requests.post(url, data).json()
+    print("✅ Successfully received response from Flask service.")
+
+    audio_b64 = res.get("audio")
+    if not audio_b64:
+        print("❌ No audio data returned from Flask service.")
+        return Response(content="No audio returned from the service.", status_code=500)
+
+    print("🎶 Base64 audio received. Decoding and saving to file...")
+
+    audio_path = "static/tts.mp3"
+    with open(audio_path, "wb") as f:
+        f.write(base64.b64decode(audio_b64))
+
+    print(f"💾 Audio saved to {audio_path}.")
+
+    print("📞 Creating Twilio VoiceResponse...")
+
+    response = VoiceResponse()
+    response.play(f"{request.base_url}static/tts.mp3")
+
+    print("🎤 Waiting for speech input from the user...")
+    gather = response.gather(input="speech", timeout=5, action="/stream/start")
+    gather.say("Please say something after the beep.")
+
+    response.say("We did not hear anything. Goodbye.")
+
+    return Response(content=str(response), media_type="application/xml")

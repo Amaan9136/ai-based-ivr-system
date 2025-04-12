@@ -1,0 +1,1 @@
+from app.helpers.transcribe import transcribe_audio_bytes

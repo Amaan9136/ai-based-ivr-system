@@ -2,9 +2,9 @@ import base64
 import json
 from fastapi import APIRouter, WebSocket
 import audioop
-import wave
 import numpy as np
 import noisereduce as nr
+from twilio.twiml.voice_response import VoiceResponse
 
 socket_router = APIRouter()
 
@@ -35,20 +35,28 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print("❌ WebSocket error:", e)
     finally:
-        await websocket.close()
+        print(
+            f"🔇 Closing WebSocket connection. Total audio frames received: {len(audio_frames)}"
+        )
 
         raw_ulaw = b"".join(audio_frames)
+        print(f"🎧 Combined {len(raw_ulaw)} bytes of raw audio from frames.")
+
         pcm_data = audioop.ulaw2lin(raw_ulaw, 2)
+        print("🔄 Converted raw ulaw to PCM format.")
+
         audio_np = np.frombuffer(pcm_data, dtype=np.int16)
+        print(f"📊 Converted PCM data to numpy array, shape: {audio_np.shape}")
+
+        print("🔊 Reducing noise from the audio...")
         reduced_noise = nr.reduce_noise(y=audio_np, sr=8000)
+        print("🎧 Noise reduction applied.")
+
         clean_audio_bytes = reduced_noise.astype(np.int16).tobytes()
+        print(f"📥 Cleaned audio ready. Size: {len(clean_audio_bytes)} bytes.")
 
-        filename = "static/recorded_audio.wav"
+        websocket.app.state.audio_bytes = clean_audio_bytes
 
-        with wave.open(filename, "wb") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(8000)
-            wav_file.writeframes(clean_audio_bytes)
-
-        print(f"💾 Audio saved to {filename}")
+        print("🔌 Closing WebSocket connection...")
+        await websocket.close()
+        print("🔌 WebSocket connection closed")

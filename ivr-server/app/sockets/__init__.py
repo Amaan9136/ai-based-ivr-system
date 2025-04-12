@@ -1,1 +1,1 @@
-from audio import socket_router
+from app.sockets.audio import socket_router
