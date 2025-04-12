@@ -21,27 +21,22 @@ VOICE_OPTIONS = {
     }
 }
 
-def translate_text_to_english(text: str, language: str = 'english') -> str:
-    """
-    Translate the given text to English from the specified language.
-    Returns original text if already in English or if translation fails.
-    """
-    language = language.lower()
 
+def translate_text_to_english(text: str, language: str = 'english') -> str:
+    language = language.lower()
     if language == 'english':
         return text
-
     try:
         return GoogleTranslator(source=language, target='english').translate(text)
     except Exception as e:
         print(f"[Translation Error] {e}")
         return text
 
+
 def translate_text_to_session_language(text: str, session_lang: str) -> str:
     session_lang = session_lang.lower()
     if session_lang == "english":
         return text
-
     try:
         return GoogleTranslator(source='english', target=session_lang).translate(text)
     except Exception as e:
@@ -52,14 +47,17 @@ def translate_text_to_session_language(text: str, session_lang: str) -> str:
 def generate_tts_audio(text, lang='en', gender='female'):
     text = text.strip()
     if not text:
-        return ""
+        print("[TTS Error] Empty text provided.")
+        return None
 
     lang = lang.lower()
     gender = gender.lower()
 
     if lang not in VOICE_OPTIONS:
+        print(f"[TTS Warning] Unsupported language '{lang}', falling back to 'en'")
         lang = 'en'
     if gender not in VOICE_OPTIONS[lang]:
+        print(f"[TTS Warning] Unsupported gender '{gender}' for language '{lang}', defaulting to 'female'")
         gender = 'female'
 
     session_key = f'bot_voice_{lang}'
@@ -72,14 +70,17 @@ def generate_tts_audio(text, lang='en', gender='female'):
         session[session_key] = selected_voice
         session[session_gender_key] = gender
 
-    # !!! IMPORTANT !!! DONT REMOVE THIS LIN E
     print(f"Generating TTS for: '{text}' using voice: {selected_voice}")
 
     try:
-        return asyncio.run(_synthesize_tts(text, selected_voice))
+        audio_base64 = asyncio.run(_synthesize_tts(text, selected_voice))
+        if not audio_base64:
+            print("[TTS Error] Audio synthesis returned empty result.")
+            return None
+        return audio_base64
     except Exception as e:
         print(f"[TTS Error] {e}")
-        return ""
+        return None
 
 
 async def _synthesize_tts(text, voice):
@@ -93,4 +94,4 @@ async def _synthesize_tts(text, voice):
         return base64.b64encode(stream.read()).decode('utf-8')
     except Exception as e:
         print(f"[TTS Streaming Error] {e}")
-        return ""
+        return None

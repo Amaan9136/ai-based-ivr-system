@@ -139,11 +139,13 @@ def find_similarities(normal_text: str, test_texts: List[str]) -> List[Dict[str,
     results = []
     for text, vector in zip(test_texts, comparison_vectors):
         similarity = cosine_similarity(base_vector, vector)
-        results.append({
-            "text": text,
-            "similarity": round(similarity, 4)
-        })
+        if similarity >= 0.20:
+            results.append({
+                "text": text,
+                "similarity": round(similarity, 4)
+            })
     return results
+
 
 # TEST ABOVE FUNCTIONS
 

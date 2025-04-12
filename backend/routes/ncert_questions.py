@@ -16,7 +16,6 @@ def extract_email(text):
     match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
     return match.group(0) if match else None
 
-
 @bp.route('/')
 def index():
     return render_template('components/ncert_questions.html')
@@ -46,13 +45,22 @@ def ask_ncert_question():
                 'audio': generate_tts_audio(msg, lang=lang_code)
             }), 400
 
-        # Handle email-related intent first
-        email_triggers = ["send email", "email this", "can i get email", "email me", "mail this", "please email"]
-        user_email = extract_email(prompt)
+        # Email trigger phrases
+        email_triggers = [
+            "email", "e-mail", "mail", "send email", "email this", "can i get email",
+            "email me", "mail this", "please email", "i want notes", "send notes",
+            "get notes", "mail notes"
+        ]
 
-        # 1. If user requests email but hasn't asked anything yet
+        # Extract email if present in the prompt
+        user_email = extract_email(prompt)
+        raw_data = session.get("ncert_raw_data", "")
+
+        # ✅ If user says anything about email
         if contains_phrase(prompt, email_triggers):
-            if not session.get("ncert_raw_data"):
+
+            # ❌ Case 1: No NCERT data yet
+            if not raw_data:
                 msg = "You didn’t ask anything about the topic yet."
                 return jsonify({
                     'status': 'no_data',
@@ -61,67 +69,83 @@ def ask_ncert_question():
                     'conversation_state': conversation_state
                 })
 
-            msg = "Sure! Please provide your email address."
-            return jsonify({
-                'status': 'awaiting_email',
-                'response': msg,
-                'audio': generate_tts_audio(msg, lang=lang_code),
-                'conversation_state': conversation_state
-            })
-
-        # 2. If prompt contains an email address (detected via regex)
-        if user_email:
-            if not session.get("ncert_raw_data"):
-                msg = "You didn’t ask anything about the topic yet."
+            # 📨 Case 2: Ask for email if not provided yet
+            if not session.get("email") and not user_email:
+                session['awaiting_email_input'] = True
+                msg = "Sure! Please provide your email address."
                 return jsonify({
-                    'status': 'error',
+                    'status': 'awaiting_email',
                     'response': msg,
-                    'audio': generate_tts_audio(msg, lang=lang_code)
-                }), 400
+                    'audio': generate_tts_audio(msg, lang=lang_code),
+                    'conversation_state': conversation_state
+                })
 
-            session['email'] = user_email
-            session['confirmed_email'] = False
+            # ✅ Case 3: Email provided, ask for confirmation
+            if user_email or (session.get("awaiting_email_input") and not session.get("email")):
+                email_to_check = user_email or extract_email(prompt)
+                if email_to_check:
+                    session['email'] = email_to_check
+                    session['confirmed_email'] = False
+                    session['awaiting_email_input'] = False
 
-            confirm_prompt = f"The user entered the email: {user_email}. Ask the user to confirm if this is correct by checking the spelling."
-            confirm_msg = generate_response(confirm_prompt)  # You can still use chat_with_history if you want contextual style
+                    confirm_chat = chat_with_history(
+                        role="NCERT Email Assistant",
+                        prompt=f"The user entered the email address: {email_to_check}.",
+                        additional_instructions="Ask the user to confirm if this email is correct by checking the spelling and replying with yes or no.",
+                        old_summary=old_summary
+                    )
+                    confirm_msg = confirm_chat['new_response']
 
-            return jsonify({
-                'status': 'awaiting_confirmation',
-                'response': confirm_msg,
-                'audio': generate_tts_audio(confirm_msg, lang=lang_code),
-                'conversation_state': conversation_state
-            })
+                    return jsonify({
+                        'status': 'awaiting_confirmation',
+                        'response': confirm_msg,
+                        'audio': generate_tts_audio(confirm_msg, lang=lang_code),
+                        'conversation_state': conversation_state
+                    })
 
-        # 3. If user confirms email spelling
-        confirmation_keywords = ["yes", "yeah", "yep", "yup", "correct", "go ahead", "okay", "sure", "confirm"]
-        if contains_phrase(prompt, confirmation_keywords) and session.get("email") and not session.get("confirmed_email"):
-            session['confirmed_email'] = True
-            raw_data = session.get("ncert_raw_data", "")
-            if raw_data:
-                sent = send_email(session['email'], raw_data)
-                msg = "✅ Email has been sent to your address!" if sent else "❌ Failed to send the email."
-            else:
-                msg = "There is no NCERT data to send."
-            return jsonify({
-                'status': 'email_sent',
-                'response': msg,
-                'audio': generate_tts_audio(msg, lang=lang_code),
-                'conversation_state': conversation_state
-            })
+            # 🟢 Case 4: Confirmed by user
+            confirmation_keywords = ["yes", "yeah", "yep", "yup", "correct", "go ahead", "okay", "sure", "confirm"]
+            if contains_phrase(prompt, confirmation_keywords) and session.get("email") and not session.get("confirmed_email"):
+                session['confirmed_email'] = True
+                session['awaiting_email_input'] = False
 
-        # 4. If unclear response during email confirmation step
-        if session.get("email") and not session.get("confirmed_email"):
-            msg = "I didn't get that. Could you please confirm if the email is correct?"
-            return jsonify({
-                'status': 'awaiting_confirmation',
-                'response': msg,
-                'audio': generate_tts_audio(msg, lang=lang_code),
-                'conversation_state': conversation_state
-            })
+                if raw_data:
+                    sent = send_email(session['email'], raw_data)
+                    msg = "✅ Email has been sent to your address!" if sent else "❌ Failed to send the email."
+                else:
+                    msg = "There is no NCERT data to send."
 
-        ### ----------- NCERT QUESTION LOGIC BELOW -----------
+                return jsonify({
+                    'status': 'email_sent',
+                    'response': msg,
+                    'audio': generate_tts_audio(msg, lang=lang_code),
+                    'conversation_state': conversation_state
+                })
 
-        # Translate prompt to English
+            # 🤔 Case 5: Waiting for confirmation
+            if session.get("email") and not session.get("confirmed_email"):
+                msg = "I didn't get that. Could you please confirm if the email is correct?"
+                return jsonify({
+                    'status': 'awaiting_confirmation',
+                    'response': msg,
+                    'audio': generate_tts_audio(msg, lang=lang_code),
+                    'conversation_state': conversation_state
+                })
+
+            # 🤷 Case 6: User stalled after being asked for email
+            if session.get('awaiting_email_input') and not session.get('email'):
+                msg = "Please enter a valid email address to proceed."
+                return jsonify({
+                    'status': 'awaiting_email',
+                    'response': msg,
+                    'audio': generate_tts_audio(msg, lang=lang_code),
+                    'conversation_state': conversation_state
+                })
+
+
+
+        ### ---------- NCERT RAG LOGIC BELOW ----------
+
         try:
             translated_prompt = translate_text_to_english(prompt, language)
             print("🔸 USER LANG TO ENGLISH:", translated_prompt)
