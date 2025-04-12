@@ -38,9 +38,10 @@ async def handle_language_selection(request: Request):
         timeout=10,
     )
 
-    response.say(
-        "Press 1 for School Information, 2 for NCERT Reference and 3 for Scholarship Information"
-    )
+    audio = str(request.base_url) + f"static/{language}.mp3"
+
+    response.play(audio)
+
     response.append(gather)
 
     response.say("We didn't receive any input. Goodbye.")

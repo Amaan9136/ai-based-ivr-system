@@ -48,7 +48,19 @@ async def start_stream(
     wav_url = f"{url}.wav"
     print(wav_url)
 
-    request.app.state.wav_url = wav_url
+    time.sleep(3)
+    response = requests.get(
+        wav_url, auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID or "", TWILIO_AUTH_TOKEN or "")
+    )
+
+    print(f"\n\n\nRESPONSE CODE: {response.status_code}\n\n\n")
+    recording_bytes = response.content  # The raw bytes of the audio file
+
+    language = request.app.state.language
+
+    prompt = transcribe_audio_bytes(recording_bytes, LANG_MAP[language])
+
+    request.app.state.prompt = prompt
 
     response = VoiceResponse()
     response.redirect("/service")

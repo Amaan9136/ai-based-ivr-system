@@ -1,7 +1,8 @@
+import os
 from transformers.pipelines import pipeline
 from app.constant import MODEL_MAP
 import numpy as np
-
+import speech_recognition as sr
 
 def transcribe_audio_bytes(audio_bytes: bytes, language: str) -> str:
     if language not in MODEL_MAP:
@@ -11,28 +12,17 @@ def transcribe_audio_bytes(audio_bytes: bytes, language: str) -> str:
 
     print(f"🧠 Using model {MODEL_MAP[language]} for language {language}")
 
-    if language == "en":
-        pipe = pipeline(
-            "automatic-speech-recognition",
-            model=MODEL_MAP[language],
-            framework="pt",
-            generate_kwargs={"language": "en"},
-            device=0,
-        )
-    else:
-        pipe = pipeline(
-            "automatic-speech-recognition",
-            model=MODEL_MAP[language],
-            framework="pt",
-            device=0,
-        )
+    audio_filename = "temp_audio.wav"
+    with open(audio_filename, "wb") as f:
+        f.write(audio_bytes)
 
-    audio_np = np.frombuffer(audio_bytes, dtype=np.int16)
-    if np.max(np.abs(audio_np)) > 1:
-        audio_np = audio_np.astype(np.float32) / 32768.0
-    # audio_stream = BytesIO(audio_bytes)
-    print("📞 Starting transcription...")
-    result = pipe(audio_np)
-    print("✅ Transcription complete.")
+    r = sr.Recognizer()
+    with sr.AudioFile(audio_filename) as source:
+        audio_data = r.record(source)
 
-    return result["text"]
+    prompt = r.recognize_google(audio_data, language="en-IN")
+    print("[USER:]", prompt)
+
+    os.remove(audio_filename)
+
+    return prompt
