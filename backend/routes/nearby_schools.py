@@ -1,13 +1,20 @@
 from flask import Blueprint, render_template, request, jsonify, session
-import re
+import re, os
 from helpers.chatters import chat_with_history
 from helpers.chroma_helpers import chroma_karnataka_schools
 from helpers.voice_helpers import generate_tts_audio, translate_text_to_session_language, translate_text_to_english
 from helpers.data_helpers import save_admission_request
+import speech_recognition as sr
+import requests
+from requests.auth import HTTPBasicAuth
+import time 
 
 bp = Blueprint('nearby_schools', __name__, url_prefix='/nearby-schools')
 
 REQUIRED_FIELDS = ["student_name", "phone", "address"]
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 
 INTENT_KEYWORDS = {
     "find_schools": ["find", "school", "near", "nearby", "area", "location", "in my locality"],
@@ -45,15 +52,46 @@ def index():
     return render_template('components/nearby_schools.html')
 
 
+
 @bp.route('/ask', methods=['POST'])
 def chatbot_response():
     try:
         data = request.json
-        prompt = data.get('prompt', '').strip()
+        print("data", data)
+
+        # Step 1: Get audio URL from request
+        audio_url = data.get('audio_url', '').strip()
+        print(audio_url)
+        if not audio_url:
+            return jsonify({"error": "audio_url is required"}), 400
+        
+
+        # Step 2: Download audio file
+        time.sleep(3)
+        response = requests.get(audio_url, auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID or "", TWILIO_AUTH_TOKEN or ""))
+        if response.status_code != 200:
+            return jsonify({"error": "Failed to download audio"}), 406
+
+        audio_filename = "temp_audio.wav"
+        with open(audio_filename, "wb") as f:
+            f.write(response.content)
+
+        # Step 3: Transcribe using SpeechRecognition
+        r = sr.Recognizer()
+        with sr.AudioFile(audio_filename) as source:
+            audio_data = r.record(source)
+
+        # Step 4: Convert audio to text
+        prompt = r.recognize_google(audio_data, language="en-IN")
+        print("[USER:]", prompt)
+
+        # Step 5: Use other data from request
         old_summary = data.get('old_response_summary', '')
         conversation_state = data.get('conversation_state', {})
 
-        print("[USER:]", prompt)
+        # Optional: Delete audio file
+        os.remove(audio_filename)
+
 
         input_language = data.get("language")
         if input_language:
