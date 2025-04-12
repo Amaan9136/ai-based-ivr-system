@@ -3,13 +3,6 @@ from flask import Blueprint, render_template, request, jsonify, session
 from helpers.chatters import chat_with_history
 from helpers.chroma_helpers import chroma_indian_scholarships
 from helpers.voice_helpers import generate_tts_audio, translate_text_to_session_language, translate_text_to_english
-import time
-import requests
-from requests.auth import HTTPBasicAuth
-import speech_recognition as sr
-
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 
 bp = Blueprint('scholarships', __name__, url_prefix='/scholarships')
 
@@ -17,42 +10,22 @@ bp = Blueprint('scholarships', __name__, url_prefix='/scholarships')
 def index():
     return render_template('components/scholarships.html')
 
-
 @bp.route('/ask', methods=['POST'])
 def chatbot_response():
     try:
         data = request.json
-        print("data", data)
+        print("data:", data)
 
-        # Step 1: Get audio URL from request
-        audio_url = data.get('audio_url', '').strip()
-        print(audio_url)
-        if not audio_url:
-            return jsonify({"error": "audio_url is required"}), 400
-        
-
-        # Step 2: Download audio file
-        time.sleep(3)
-        response = requests.get(audio_url, auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID or "", TWILIO_AUTH_TOKEN or ""))
-        if response.status_code != 200:
-            return jsonify({"error": "Failed to download audio"}), 406
-
-        audio_filename = "temp_audio.wav"
-        with open(audio_filename, "wb") as f:
-            f.write(response.content)
-
-        # Step 3: Transcribe using SpeechRecognition
-        r = sr.Recognizer()
-        with sr.AudioFile(audio_filename) as source:
-            audio_data = r.record(source)
-
-        # Step 4: Convert audio to text
-        prompt = r.recognize_google(audio_data, language="en-IN")
-        print("[USER:]", prompt)
-        data = request.json
+        # Get audio URL from request
         prompt = data.get('prompt', '').strip()
+        if not prompt:
+            return jsonify({"error": "prompt is required"}), 400
+        print("Prompt:", prompt)
+
+        # Extract other fields
         old_summary = data.get('old_response_summary', '')
         conversation_state = data.get('conversation_state', {})
+
 
         print("[INFO] Received prompt:", prompt)
 
