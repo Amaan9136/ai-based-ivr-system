@@ -70,7 +70,7 @@ def chatbot_response():
                 'audio': generate_tts_audio(msg, lang=lang_code)
             }), 400
 
-        # Translate user's prompt to English (for consistent intent detection / embeddings)
+        # Translate prompt to English for consistent intent detection
         try:
             translated_prompt_for_intent = translate_text_to_english(prompt, language)
             print("[USER LANG TO ENG]", translated_prompt_for_intent)
@@ -95,7 +95,7 @@ def chatbot_response():
                     for r in results
                 )
 
-                print("[raw_data] ",raw_data)
+                print("[raw_data] ", raw_data)
 
                 additional_instructions = (
                     "First apologize for making user to wait. "
@@ -114,10 +114,8 @@ def chatbot_response():
                 )
 
                 translated_response = translate_text_to_session_language(chat_result['new_response'], language)
-
-                # Generate audio (always use lang_code for TTS)
                 audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
-            
+
                 return jsonify({
                     'status': 'success',
                     'response': translated_response,
@@ -182,6 +180,7 @@ def chatbot_response():
         )
 
         translated_response = translate_text_to_session_language(chat_result['new_response'], language)
+        audio_base64 = generate_tts_audio(translated_response, lang=lang_code)
 
         return jsonify({
             'status': 'success',
@@ -197,5 +196,5 @@ def chatbot_response():
         return jsonify({
             'status': 'error',
             'response': msg,
-            'audio': generate_tts_audio(msg, lang=lang_code)
+            'audio': generate_tts_audio(msg, lang="en") 
         }), 500

@@ -1,114 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Scholarships</title>
+  <title>Scholarship Information</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    #chat-box {
+      border: 1px solid #ddd;
+      height: 400px;
+      overflow-y: scroll;
+      padding: 15px;
+      background: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 15px;
+    }
+
+    .user {
+      text-align: right;
+      color: white;
+    }
+
+    .bot {
+      text-align: left;
+      color: white;
+    }
+  </style>
 </head>
+
 <body>
+  <audio id="loadingBeep" src="{{ url_for('static', filename='audio/waiting_music.mp3') }}" loop></audio>
   <div class="container mt-5">
-    <h1>Scholarships</h1>
-    <p class="mb-4">Here students can view and apply for available scholarships.</p>
 
-    <!-- List of scholarships -->
-    <div id="scholarship-list" class="mb-5">
-      <h4>Available Scholarships</h4>
-      <div class="spinner-border text-primary" role="status" id="loading" style="display: none;">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <div id="scholarships" class="mt-3"></div>
+    <h2>Scholarship Information</h2>
+
+    <!-- Language dropdown -->
+    <div class="mb-3">
+      <label for="languageSelect" class="form-label text-black">Choose Language:</label>
+      <select id="languageSelect" class="form-select bg-white text-black">
+        <option value="english">English</option>
+        <option value="hindi">Hindi</option>
+        <option value="kannada">Kannada</option>
+      </select>
     </div>
 
-    <!-- Scholarship application form -->
-    <div>
-      <h4>Apply for a Scholarship</h4>
-      <form id="applyForm">
-        <div class="mb-3">
-          <label for="scholarshipId" class="form-label">Scholarship ID</label>
-          <input type="text" id="scholarshipId" class="form-control" required>
-        </div>
-        <div class="mb-3">
-          <label for="studentId" class="form-label">Student ID</label>
-          <input type="text" id="studentId" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-success">Apply</button>
-      </form>
-      <div id="applyResult" class="mt-3"></div>
-    </div>
+    <div id="chat-box" class="mb-3"></div>
+
+    <form id="chat-form" class="input-group">
+      <input type="text" id="promptInput" class="form-control" placeholder="Ask me about Informations..." required>
+      <button type="button" class="btn btn-outline-primary" id="micButton">🎤</button>
+      <button class="btn btn-success" type="submit">Send</button>
+    </form>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const loading = document.getElementById('loading');
-      const scholarshipsDiv = document.getElementById('scholarships');
+    document.addEventListener("DOMContentLoaded", () => {
+      let recognitionInProgress = false;
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.interimResults = false;
 
-      loading.style.display = 'inline-block';
+      const chatForm = document.getElementById("chat-form");
+      const chatBox = document.getElementById("chat-box");
+      const promptInput = document.getElementById("promptInput");
+      const languageSelect = document.getElementById("languageSelect");
+      const micButton = document.getElementById("micButton");
 
-      fetch('/scholarships/available-scholarships')
-        .then(res => res.json())
-        .then(data => {
-          loading.style.display = 'none';
-          if (data.status === 'success') {
-            data.scholarships.forEach(s => {
-              const card = `
-                <div class="card mb-3">
-                  <div class="card-body">
-                    <h5 class="card-title">${s.name}</h5>
-                    <p><strong>Eligibility:</strong> ${s.eligibility}</p>
-                    <p><strong>Amount:</strong> ${s.amount}</p>
-                    <p><strong>Deadline:</strong> ${s.deadline}</p>
-                    <p><strong>Documents Required:</strong> ${s.documents_required.join(', ')}</p>
-                    <p><strong>ID:</strong> ${s.id}</p>
-                  </div>
-                </div>
-              `;
-              scholarshipsDiv.innerHTML += card;
-            });
-          } else {
-            scholarshipsDiv.innerHTML = '<div class="alert alert-warning">No scholarships found.</div>';
+      let oldSummary = "";
+
+      // Append message to chat box
+      function appendMessage(text, sender) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${sender}`;
+        msgDiv.textContent = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      // Submit form handler
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const prompt = promptInput.value.trim();
+        const selectedLanguage = languageSelect.value;
+        if (!prompt) return;
+
+        appendMessage(prompt, "user");
+        promptInput.value = "";
+
+        // Start beep sound
+        const loadingBeep = document.getElementById("loadingBeep");
+        loadingBeep.play();
+
+        try {
+          const response = await fetch("/scholarships/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt,
+              language: selectedLanguage,
+              old_response_summary: oldSummary,
+              conversation_state: {}
+            })
+          });
+
+          const data = await response.json();
+
+          loadingBeep.pause();
+          loadingBeep.currentTime = 0;
+
+          appendMessage(data.response, "bot");
+          oldSummary = data.old_response_summary;
+
+          if (data.audio) {
+            const audio = new Audio("data:audio/mp3;base64," + data.audio);
+            audio.play();
           }
-        })
-        .catch(err => {
-          loading.style.display = 'none';
-          scholarshipsDiv.innerHTML = '<div class="alert alert-danger">Failed to load scholarships.</div>';
-          console.error(err);
-        });
-    });
 
-    document.getElementById('applyForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const scholarshipId = document.getElementById('scholarshipId').value;
-      const studentId = document.getElementById('studentId').value;
+        } catch (error) {
+          console.error("Error fetching response:", error);
 
-      fetch('/scholarships/apply-scholarship', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scholarship_id: scholarshipId,
-          student_id: studentId
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const resultDiv = document.getElementById('applyResult');
-        if (data.status === 'success') {
-          resultDiv.innerHTML = `
-            <div class="alert alert-success">
-              <strong>${data.message}</strong><br>
-              Application ID: ${data.application_id}<br>
-              ${data.next_steps}
-            </div>
-          `;
-        } else {
-          resultDiv.innerHTML = '<div class="alert alert-warning">Application failed. Please check details.</div>';
+          // Also stop beep sound on error
+          loadingBeep.pause();
+          loadingBeep.currentTime = 0;
+
+          appendMessage("Sorry, something went wrong.", "bot");
         }
-      })
-      .catch(err => {
-        document.getElementById('applyResult').innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
-        console.error(err);
       });
+
+      // Language change handler
+      languageSelect.addEventListener("change", async (e) => {
+        const lang = e.target.value;
+        await fetch("/language/set-language", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: lang })
+        });
+        console.log("Language set to:", lang);
+      });
+
+      // Start voice input
+      function startVoiceInput() {
+        if (recognitionInProgress) return;
+        recognitionInProgress = true;
+
+        const langMap = {
+          english: "en-US",
+          hindi: "hi-IN",
+          kannada: "kn-IN"
+        };
+
+        const selectedLang = languageSelect.value;
+        recognition.lang = langMap[selectedLang] || "en-US";
+        recognition.start();
+      }
+
+      // Voice recognition result
+      recognition.onresult = function (event) {
+        promptInput.value = event.results[0][0].transcript;
+        recognitionInProgress = false;
+        recognition.stop();
+      };
+
+      // Restart if user is silent
+      recognition.onspeechend = function () {
+        recognition.stop();
+        if (promptInput.value.trim() === "") {
+          console.log("No speech detected, restarting...");
+          recognition.start();
+        } else {
+          recognitionInProgress = false;
+        }
+      };
+
+      // Handle errors like no-speech
+      recognition.onerror = function (e) {
+        console.error("Voice recognition error:", e);
+        recognition.stop();
+
+        if (e.error === "no-speech" || e.error === "audio-capture") {
+          console.log("No speech or audio capture error, retrying...");
+          recognition.start(); // 🔁 Retry listening
+        } else {
+          appendMessage("Voice recognition error occurred. Please try again.", "bot");
+          recognitionInProgress = false;
+        }
+      };
+
+      // Bind mic button click
+      micButton.addEventListener("click", () => {
+        try {
+          recognition.stop(); // stop any previous sessions
+        } catch (e) {
+          // no active session, safe to ignore
+        }
+        startVoiceInput();
+      });
+
     });
   </script>
+
 </body>
+
 </html>

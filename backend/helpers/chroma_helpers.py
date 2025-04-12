@@ -97,4 +97,4 @@ def chroma_query(dataset_name: str, prompt: str, top_k: int = 5):
 
 chroma_karnataka_schools = lambda prompt, top_k=5: chroma_query("karnataka_schools", prompt, top_k)
 chroma_indian_scholarships = lambda prompt, top_k=5: chroma_query("indian_scholarships", prompt, top_k)
-chroma_ncert_books = lambda prompt, top_k=3: chroma_query("ncert_books", prompt, top_k)
+chroma_ncert_books = lambda prompt, top_k=4: chroma_query("ncert_books", prompt, top_k)

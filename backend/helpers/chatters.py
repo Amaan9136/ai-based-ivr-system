@@ -48,7 +48,6 @@ def fix_malformed_json(output: str) -> dict | None:
         print(f"[Fix Attempt] JSON still invalid: {e}")
         return None
 
-
 def chat_with_history(
     role: str = "Normal Chatbot",
     prompt: str = "",
