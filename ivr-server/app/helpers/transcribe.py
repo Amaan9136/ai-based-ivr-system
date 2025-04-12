@@ -2,6 +2,7 @@ from transformers.pipelines import pipeline
 from app.constant import MODEL_MAP
 import numpy as np
 
+
 def transcribe_audio_bytes(audio_bytes: bytes, language: str) -> str:
     if language not in MODEL_MAP:
         raise ValueError(
@@ -10,12 +11,21 @@ def transcribe_audio_bytes(audio_bytes: bytes, language: str) -> str:
 
     print(f"🧠 Using model {MODEL_MAP[language]} for language {language}")
 
-    pipe = pipeline(
-        "automatic-speech-recognition",
-        model=MODEL_MAP[language],
-        framework="pt",
-        device=0,
-    )
+    if language == "en":
+        pipe = pipeline(
+            "automatic-speech-recognition",
+            model=MODEL_MAP[language],
+            framework="pt",
+            generate_kwargs={"language": "en"},
+            device=0,
+        )
+    else:
+        pipe = pipeline(
+            "automatic-speech-recognition",
+            model=MODEL_MAP[language],
+            framework="pt",
+            device=0,
+        )
 
     audio_np = np.frombuffer(audio_bytes, dtype=np.int16)
     if np.max(np.abs(audio_np)) > 1:
