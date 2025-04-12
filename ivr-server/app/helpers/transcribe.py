@@ -20,7 +20,8 @@ def transcribe_audio_bytes(audio_bytes: bytes, language: str) -> str:
     with sr.AudioFile(audio_filename) as source:
         audio_data = r.record(source)
 
-    prompt = r.recognize_google(audio_data, language="en-IN")
+    prompt = r.recognize_google(audio_data, language=f"en-IN")
+
     print("[USER:]", prompt)
 
     os.remove(audio_filename)

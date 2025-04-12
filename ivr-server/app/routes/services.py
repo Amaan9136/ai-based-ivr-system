@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Request, Response
 import requests
 from app.constant import FLASK_URL
@@ -10,6 +11,10 @@ service_router = APIRouter()
 @service_router.post("/service")
 def get_service(request: Request):
     try:
+        response = VoiceResponse()
+        response.pause(length=10)
+
+
         print("🔍 Retrieving prompt and endpoint values from app state...")
         prompt = request.app.state.prompt
         endpoint = request.app.state.endpoint
@@ -25,6 +30,7 @@ def get_service(request: Request):
         print("✅ Successfully received response from Flask service.", res)
 
         audio_b64 = res.get("audio")
+
         if not audio_b64:
             print("❌ No audio data returned from Flask service.")
             return Response(
@@ -45,7 +51,11 @@ def get_service(request: Request):
         response.play(f"{request.base_url}static/tts.mp3")
 
         print("🎤 Waiting for speech input from the user...")
-        response.say("Please continue your chat!")
+        language = request.app.state.language
+        response.play(str(request.base_url) + f"static/continue_convo_{language}.mp3")
+
+        # os.remove("static/tts.mp3")
+
         response.record(
             action="/stream/start",
             method="POST",
