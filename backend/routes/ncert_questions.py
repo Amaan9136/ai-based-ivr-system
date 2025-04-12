@@ -49,7 +49,7 @@ def ask_ncert_question():
         email_triggers = [
             "email", "e-mail", "mail", "send email", "email this", "can i get email",
             "email me", "mail this", "please email", "i want notes", "send notes",
-            "get notes", "mail notes"
+            "get notes", "mail notes","notes","note"
         ]
 
         # Extract email if present in the prompt

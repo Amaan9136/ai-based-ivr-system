@@ -49,7 +49,9 @@ def index():
 def chatbot_response():
     try:
         data = request.json
+        print("data",data)
         prompt = data.get('prompt', '').strip()
+        print("prompt",prompt)
         old_summary = data.get('old_response_summary', '')
         conversation_state = data.get('conversation_state', {})
 

@@ -8,7 +8,8 @@ ALLOWED_LANGUAGES = ["english", "kannada", "hindi"]
 def set_language():
     data = request.get_json()
     language = data.get('language', '').strip().lower()
-
+    print("[LANGUAGE]",language)
+    
     if not language:
         return jsonify({'status': 'error', 'message': 'No language provided'}), 400
 
