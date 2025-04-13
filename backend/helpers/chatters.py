@@ -76,7 +76,8 @@ Task:
 2. Update the overall chat summary by including the new message and your response, and re-summarizing the full conversation so far.
 
 Rules:
-- Output only a valid JSON object, JSON must include exactly two keys:
+- Output only a valid JSON object.
+- JSON must include exactly two keys:
   • "new_response": Your plain text reply to the user.
   • "old_response_summary": A rewritten summary of the *entire* chat so far, including this latest message and response.
 - Do NOT include usernames, prefixes like 'User:' or 'Bot:', markdown, or formatting.
