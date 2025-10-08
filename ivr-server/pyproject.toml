@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "ivr-server"
+version = "0.1.0"
+description = ""
+authors = ["Soorya U <sooryau7@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+noisereduce = "^3.0.3"
+twilio = "^9.5.2"
+chromadb = "1.0.4"
+numpy = "^2.2.4"
+fastapi = {extras = ["standard"], version = "0.115.9"}
+transformers = "^4.51.2"
+torch = "^2.6.0"
+python-dotenv = "^1.1.0"
+speechrecognition = "^3.14.2"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

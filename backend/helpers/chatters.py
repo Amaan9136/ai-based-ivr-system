@@ -1,0 +1,128 @@
+import json
+import re
+from helpers.llm import generate_response
+
+
+import json
+import re
+
+def fix_malformed_json(output: str) -> dict | None:
+    try:
+        # Step 1: Extract from first curly brace onward
+        start_index = output.find('{')
+        if start_index == -1:
+            return None
+        json_str = output[start_index:]
+
+        # Step 2: Replace smart/single quotes with regular double quotes
+        json_str = json_str.replace("“", '"').replace("”", '"').replace("‘", '"').replace("’", '"')
+        json_str = json_str.replace("'", '"')
+
+        # Step 3: Remove illegal control characters (e.g., \x00-\x1F except \n, \r, \t)
+        json_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', json_str)
+
+        # Step 4: Remove trailing commas before closing brackets/braces
+        json_str = re.sub(r',\s*([\]}])', r'\1', json_str)
+
+        # Step 5: Escape newlines inside double-quoted strings
+        def escape_newlines(match):
+            inner = match.group(0)
+            return inner.replace('\n', ' ').replace('\r', '\\r')
+        json_str = re.sub(r'"(.*?)"', escape_newlines, json_str, flags=re.DOTALL)
+
+        # Step 6: Balance quotes (quick fix)
+        if json_str.count('"') % 2 != 0:
+            json_str += '"'
+
+        # Step 7: Balance braces
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        if close_braces < open_braces:
+            json_str += '}' * (open_braces - close_braces)
+        elif close_braces > open_braces:
+            json_str = json_str[:json_str.rfind('}') + 1]
+
+        # Step 8: Trim anything after the last closing brace
+        last_brace = json_str.rfind('}')
+        if last_brace != -1:
+            json_str = json_str[:last_brace + 1]
+
+        # Step 9: Attempt to parse
+        parsed = json.loads(json_str)
+
+        # Step 10: Validate keys
+        required_keys = ["new_response", "old_response_summary"]
+        if not all(k in parsed for k in required_keys):
+            print("[Fix Attempt] JSON is missing required keys.")
+            return None
+
+        return parsed
+
+    except Exception as e:
+        print(f"[Fix Attempt] JSON still invalid: {e}")
+        return None
+
+def chat_with_history(
+    role: str = "Normal Chatbot",
+    prompt: str = "",
+    old_summary: str = "has no chat summary, generate from now",
+    additional_instructions: str = "No Additional Instructions Provided"
+) -> dict:
+    instruction = f"""
+Role: {role}
+
+Task:
+1. Generate a helpful response to the user's latest message below.
+2. Update the overall chat summary by including the new message and your response, and re-summarizing the full conversation so far.
+
+Rules:
+- Output only a valid JSON object, JSON must include exactly two keys:
+  • "new_response": Your plain text reply to the user.
+  • "old_response_summary": A rewritten summary of the *entire* chat so far, including this latest message and response.
+- Do NOT include usernames, prefixes like 'User:' or 'Bot:', markdown, or formatting.
+- Summary should be brief, natural, and cumulative — avoid repeating previous summaries word-for-word.
+
+Example:
+{{
+  "new_response": "Sure, I can help with that. What do you need?",
+  "old_response_summary": "The user greeted the assistant and asked for help. The assistant offered support."
+}}
+
+Additional Instructions:
+{additional_instructions}
+
+Current chat summary:
+{old_summary}
+
+User's new message:
+{prompt}
+"""
+
+    try:
+        output = generate_response(instruction).strip()
+        print("[Raw LLM Output]", output)
+
+        # Try direct parse
+        try:
+            parsed = json.loads(output)
+            if all(k in parsed for k in ["new_response", "old_response_summary"]):
+                return parsed
+            else:
+                print("[Warning] Parsed JSON missing keys. Attempting fix.")
+
+        except json.JSONDecodeError:
+            print("[Warning] Raw output is not valid JSON. Attempting to fix.")
+
+        # Try fixing malformed JSON
+        fixed = fix_malformed_json(output)
+        if fixed:
+            return fixed
+
+        raise ValueError("No valid JSON could be parsed.")
+
+    except Exception as e:
+        print(f"[chat_with_history Error] {e}")
+        return {
+            "new_response": "Sorry, I couldn't process that properly.",
+            "old_response_summary": old_summary
+        }

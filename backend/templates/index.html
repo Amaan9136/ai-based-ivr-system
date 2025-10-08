@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Ops Backend Tester</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+
+<body>
+  <div class="container-fluid p-0">
+    <div class="phone-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3>Model Ops Backend Tester</h3>
+        </div>
+
+        <button class="btn btn-dark menu-btn active" data-target="nearby-schools">
+          <span class="number">1</span> Nearby Schools & Admission
+        </button>
+        <button class="btn btn-dark menu-btn" data-target="scholarships">
+          <span class="number">2</span> Scholarships
+        </button>
+        <button class="btn btn-dark menu-btn" data-target="ncert-questions">
+          <span class="number">3</span> NCERT Questions
+        </button>
+        <button class="btn btn-dark menu-btn" data-target="complaints">
+          <span class="number">4</span> File Complaints
+        </button>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="content-area">
+        <iframe id="contentFrame" class="iframe-container" src="/nearby-schools" frameborder="0"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const menuButtons = document.querySelectorAll(".menu-btn");
+      const contentFrame = document.getElementById("contentFrame");
+
+      // Set active menu item and load corresponding page
+      menuButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          menuButtons.forEach((btn) => btn.classList.remove("active"));
+          this.classList.add("active");
+          const target = this.getAttribute("data-target");
+          contentFrame.src = "/" + target;
+        });
+      });
+
+      // Set default route
+      contentFrame.src = "/nearby-schools";
+    });
+  </script>
+</body>
+
+</html>
